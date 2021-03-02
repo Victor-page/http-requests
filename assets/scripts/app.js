@@ -5,36 +5,55 @@ const fetchButton = document.querySelector('#available-posts button');
 const postList = document.querySelector('ul');
 
 function sendHttpRequest(method, url, data) {
-  const promise = new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
+  // const promise = new Promise((resolve, reject) => {
+  // const xhr = new XMLHttpRequest();
+  // xhr.setRequestHeader('Content-Type', 'application/json');
+  //   xhr.open(method, url);
+  //   xhr.responseType = 'json';
+  //   xhr.onload = function () {
+  //     if (xhr.status >= 200 && xhr.status < 300) {
+  //       resolve(xhr.response);
+  //     } else {
+  //       reject(new Error('Smth went wrong!'));
+  //     }
+  //     // console.log(JSON.parse(xhr.response));
+  //   };
+  //   xhr.onerror = function () {
+  //     reject(new Error('Failed to send the request!'));
+  //   };
+  //   xhr.send(JSON.stringify(data));
 
-    xhr.responseType = 'json';
-
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.response);
+  // });
+  // return promise;
+  return fetch(url, {
+    method: method,
+    // body: JSON.stringify(data),
+    body: data,
+    // headers: {
+    //   'Content-Type': 'application/json',
+    // },
+  })
+    .then((response) => {
+      if (response.status >= 200 && response.status < 300) {
+        return response.json();
       } else {
-        reject(new Error('Smth went wrong!'));
+        return response.json().then((errData) => {
+          console.log(errData);
+          throw new Error('Smth went wrong - server-side.');
+        });
       }
-      // console.log(JSON.parse(xhr.response));
-    };
-
-    xhr.onerror = function () {
-      reject(new Error('Failed to send the request!'));
-    };
-
-    xhr.send(JSON.stringify(data));
-  });
-
-  return promise;
+    })
+    .catch((error) => {
+      console.log(error);
+      throw new Error('Smth went wrong!');
+    });
 }
 
 async function fetchPosts() {
   try {
     const responseData = await sendHttpRequest(
       'GET',
-      'https://jsonplaceholder.typicode.com/pos'
+      'https://jsonplaceholder.typicode.com/posts'
     );
     const listOfPosts = responseData;
 
@@ -53,7 +72,14 @@ async function createPost(title, content) {
     body: content,
     userId: userId,
   };
-  sendHttpRequest('POST', 'https://jsonplaceholder.typicode.com/posts', post);
+
+  const fd = new FormData(form);
+  // fd.append('title', title);
+  // fd.append('body', content);
+  fd.append('userId', userId);
+  // fd.append('someFile', 'photo.png');
+
+  sendHttpRequest('POST', 'https://jsonplaceholder.typicode.com/posts', fd);
   appendPost(title, content, userId);
 }
 
